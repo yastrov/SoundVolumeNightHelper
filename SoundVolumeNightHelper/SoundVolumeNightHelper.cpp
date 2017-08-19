@@ -172,6 +172,12 @@ void RemoveFromAutorun()
 }
 #pragma endregion
 
+bool showTaskBar()
+{
+	const HICON icon = LoadIconW(hInst, MAKEINTRESOURCE(IDI_SOUNDVOLUMENIGHTHELPER));
+	return trayIcon.init(mainhWnd, ID_TRAY, WM_TRAYICON, icon);
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -205,8 +211,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	timer.start(timerInterval);
 	soundManager.init();
 	//
-	const HICON icon = LoadIconW(hInst, MAKEINTRESOURCE(IDI_SOUNDVOLUMENIGHTHELPER));
-	const bool status = trayIcon.init(mainhWnd, ID_TRAY, WM_TRAYICON, icon);
+	const bool status = showTaskBar();
 	if (!status) {
 		return -1;
 	}
@@ -296,6 +301,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static UINT s_uTaskbarRestart;
     switch (message)
     {
     case WM_COMMAND:
@@ -357,12 +363,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_CONTEXTMENU:
 	case WM_CREATE:
+		s_uTaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
 		createPopupMenu();
 #ifndef _DEBUG
 		trayIcon.showBaloonMessage(szTitle, L"Hello world", NULL);
 #endif
 		break;
     default:
+		// TaskBar created after crash.
+		if(message == s_uTaskbarRestart) {
+			showTaskBar();
+		}
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
