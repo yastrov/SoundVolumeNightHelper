@@ -355,6 +355,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		DestroyMenu(hPopupMenu);
         PostQuitMessage(0);
         break;
+	case WM_POWERBROADCAST:
+        { /* https://msdn.microsoft.com/en-us/library/windows/desktop/aa373248(v=vs.85).aspx */
+		switch (wParam) {
+		case PBT_APMSUSPEND:
+			timer.stop();
+			break;
+		case PBT_APMRESUMESUSPEND:
+			timer.start(timerInterval);
+			break;
+		default: break;
+		}
+        }
+		break;
 	case WM_TIMER:
 		return timer_proc(hWnd, message, wParam, lParam);
 		break;
